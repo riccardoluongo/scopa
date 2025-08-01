@@ -168,7 +168,7 @@ uint8_t gioca(struct player * player, uint8_t carta){
 }
 
 uint8_t punteggio_totale(struct player * player){
-    return player->scope + player->settanta + player->settebello +player->lunga;
+    return player->scope + player->settanta + player->settebello + player->lunga;
 }
 
 void init(){
