@@ -1,2 +1,4 @@
-# scopa
-gioco di carte scopa a riga di comando, scritto in C
+# Gioca
+per eseguire basta compilare il file main.c con un qualsiasi compilatore.
+
+es. `gcc main.c -o scopa`
