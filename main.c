@@ -54,6 +54,8 @@ size_t swap(struct carta arr[], size_t pos1, size_t pos2){
 }
 
 void mischia(){
+    posizione_mazzo = 39;
+
     for(uint8_t i = 0; i < 40; i++){
         swap(mazzo, rand() % 40, rand() % 40);
     }
@@ -173,10 +175,17 @@ uint8_t punteggio_totale(struct player * player){
 
 void init(){
     riempi_mazzo();
-    mischia();
-    prendi_carte(3, player.mazzo);
-    prendi_carte(3, cpu.mazzo);
-    prendi_carte(4, tavolo);
+
+    uint8_t num = 0, i = 0;
+    do{
+        mischia();
+        prendi_carte(3, player.mazzo);
+        prendi_carte(3, cpu.mazzo);
+        prendi_carte(4, tavolo);
+
+        while(i < 3)
+            if(tavolo[i++].val == 10) num++;
+    } while(num >= 3);
 }
 
 void calcola_punti(){
