@@ -148,6 +148,10 @@ uint8_t gioca(struct player * player, uint8_t carta){
             qsort(tavolo, fine_tavolo, dim_carta, confronta_valore);
 
             short int j = binsearch(tavolo, 0, fine_tavolo, prese[i].val);
+
+            if(strcmp(tavolo[j].seme, "Denari") == 0 && tavolo[j].val == 7)
+                player->settebello++;
+
             if(j >= 0){
                 player->carte_prese[player->pos_carte_prese++] = prese[i];
                 tavolo[j] = carta_presa;
@@ -155,6 +159,9 @@ uint8_t gioca(struct player * player, uint8_t carta){
         }
         player->carte_prese[player->pos_carte_prese++] = player->mazzo[carta];
         player->mazzo[carta] = carta_presa;
+
+        if(strcmp(player->mazzo[carta].seme, "Denari") == 0 && player->mazzo[carta].val == 7)
+            player->settebello++;
 
         if(conta_carte(tavolo) == 0){
             player->scope++;
@@ -209,19 +216,6 @@ void calcola_punti(){
         player.denari++;
     else if(denari_cpu > denari_player)
         cpu.denari++;
-
-    for(int8_t i = player.pos_carte_prese; i >= 0; i--)
-        if(strcmp(player.carte_prese[i].seme, "Denari") == 0 && player.carte_prese[i].val == 7){
-            player.settebello++;
-            trovato = 1;
-            break;
-        }
-    if(!trovato)
-        for(int8_t i = cpu.pos_carte_prese; i >= 0; i--)
-            if(strcmp(cpu.carte_prese[i].seme, "Denari") == 0 && cpu.carte_prese[i].val == 7){
-                cpu.settebello++;
-                break;
-            }
 
     if(sette_player > sette_cpu)
         player.settanta++;
@@ -282,6 +276,8 @@ int main(){
     init();
 
     do{
+        printf("punti tot. player: %d \t punti tot. cpu: %d\n", punteggio_totale(&player), punteggio_totale(&cpu));
+
         if(turno++ % 2 != 0){
             if(conta_carte(player.mazzo) == 0){
                 if(posizione_mazzo < 0){
@@ -311,7 +307,8 @@ int main(){
 
                 if(input >= 1 && input-- <= 3){
                     if(player.mazzo[input].val != 99){
-                        if(gioca(&player, input) == 2 && turno != 38){
+                        uint8_t num_carte_mazzo = conta_carte(player.mazzo);
+                        if(gioca(&player, input) == 2 && (posizione_mazzo > 0 || num_carte_mazzo > 1 || conta_carte(cpu.mazzo) > 0)){
                             printf("scopa! Premi Enter per continuare...");
 
                             char c;
@@ -348,7 +345,9 @@ int main(){
                 if(cpu.mazzo[i].val != 99)
                     if(trova(tavolo, sizeof(struct carta), cpu.mazzo[i].val, 0, prese_temp, 0, 0)){
                         printf("-> la CPU gioca la carta: %d %s\n", cpu.mazzo[i].val, cpu.mazzo[i].seme);
-                        if(gioca(&cpu, i) == 2 && (posizione_mazzo > 0 || conta_carte(cpu.mazzo) > 1)){
+
+                        uint8_t num_carte_mazzo = conta_carte(cpu.mazzo);
+                        if(gioca(&cpu, i) == 2 && (posizione_mazzo > 0 || num_carte_mazzo > 1 || conta_carte(player.mazzo) > 0)){
                             printf("-> la CPU ha fatto scopa, premi Enter per continuare...");
 
                             char c;
