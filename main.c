@@ -259,7 +259,6 @@ void calcola_punti(){
     }
 
     printf("\e[1;1H\e[2Jmano terminata!\npunteggi giocatore:\n Scope: %d\tSettanta: %d\n Settebello: %d\tCarte a lungo: %d\n\npunteggi CPU:\n Scope: %d\tSettanta: %d\n Settebello: %d\tCarte a lungo: %d\n\npunti totali giocatore: %d\tpunti totali CPU: %d\npremi Enter per continuare...", player.scope, player.settanta, player.settebello, player.lunga, cpu.scope, cpu.settanta, cpu.settebello, cpu.lunga, punteggio_totale(&player), punteggio_totale(&cpu));
-    printf("tot. cpu: %d\t tot. player: %d", punteggio_totale(&cpu), punteggio_totale(&player));
 
     char c;
     while((c = getchar()) != '\n');
@@ -293,8 +292,6 @@ int main(){
     init();
 
     do{
-        printf("punti tot. player: %d \t punti tot. cpu: %d\n", punteggio_totale(&player), punteggio_totale(&cpu));
-
         if(turno++ % 2 != 0){
             if(conta_carte(player.mazzo) == 0){
                 if(posizione_mazzo < 0){
@@ -366,9 +363,7 @@ int main(){
 
             for(uint8_t i = 0; i <= 2; i++)
                 if(cpu.mazzo[i].val != 99){
-                    uint8_t trov = trova(tavolo, fine_tavolo, cpu.mazzo[i].val, 0, prese_temp, 0, 0);
-                    printf("trov: %d\n", trov);
-                    if((trov)){
+                    if((trova(tavolo, fine_tavolo, cpu.mazzo[i].val, 0, prese_temp, 0, 0))){
                         printf("-> la CPU gioca la carta: %d %s\n", cpu.mazzo[i].val, cpu.mazzo[i].seme);
 
                         uint8_t num_carte_mazzo = conta_carte(cpu.mazzo), ris_gioca;
@@ -394,7 +389,7 @@ int main(){
                 while(cpu.mazzo[carta].val == 99)
                     carta++;
 
-                printf("-> 1la CPU gioca la carta: %d %s\n", cpu.mazzo[carta].val, cpu.mazzo[carta].seme);
+                printf("-> la CPU gioca la carta: %d %s\n", cpu.mazzo[carta].val, cpu.mazzo[carta].seme);
                 gioca(&cpu, carta);
             }
         }
