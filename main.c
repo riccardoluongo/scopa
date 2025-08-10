@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 #include <time.h>
 #include <stdlib.h>
 
@@ -34,6 +35,7 @@ uint8_t min_len = 15;
 int8_t posizione_mazzo = 39;
 char * semi[4] = {"Spade", "Coppe", "Denari", "Bastoni"};
 unsigned short int turno = 1;
+char ultima_presa;
 
 void riempi_mazzo(){
     uint8_t k = 0;
@@ -141,7 +143,7 @@ uint8_t gioca(struct player * player, uint8_t carta){
 
     qsort(tavolo, fine_tavolo, dim_carta, confronta_valore);
 
-    if(trova(tavolo, dim_carta, player->mazzo[carta].val, 0, prese_temp, 0, 0)){
+    if(trova(tavolo, fine_tavolo, player->mazzo[carta].val, 0, prese_temp, 0, 0)){
         fine_prese = trova_fine_mazzo(prese);
 
         for(uint8_t i = 0; i < fine_prese; i++){
@@ -199,6 +201,17 @@ void calcola_punti(){
     uint8_t denari_player = 0, denari_cpu = 0, trovato = 0, sette_player = 0, sette_cpu = 0, punti_cpu, punti_player, vince_player;
     static uint8_t primo_player = 2;
 
+    if(ultima_presa == 'p'){
+        for(uint8_t i = 0; i < trova_fine_mazzo(tavolo); i++)
+            if(tavolo[i].val != 99)
+                player.carte_prese[player.pos_carte_prese++] = tavolo[i];
+    } else{
+        for(uint8_t i = 0; i < trova_fine_mazzo(tavolo); i++)
+            if(tavolo[i].val != 99)
+                cpu.carte_prese[cpu.pos_carte_prese++] = tavolo[i];
+    }
+
+
     if(player.pos_carte_prese > cpu.pos_carte_prese)
         player.lunga++;
     else if(cpu.pos_carte_prese > player.pos_carte_prese)
@@ -222,7 +235,10 @@ void calcola_punti(){
     if(sette_cpu >sette_player)
         cpu.settanta++;
 
-    if((punti_player = punteggio_totale(&player)) >= 11 || (punti_cpu = punteggio_totale(&cpu)) >= 11){
+    punti_player = punteggio_totale(&player);
+    punti_cpu = punteggio_totale(&cpu);
+
+    if(punti_player >= 11 || punti_cpu >= 11){
         uint8_t scelta, vince_player;
         vince_player = punti_player > punti_cpu;
 
@@ -243,6 +259,7 @@ void calcola_punti(){
     }
 
     printf("\e[1;1H\e[2Jmano terminata!\npunteggi giocatore:\n Scope: %d\tSettanta: %d\n Settebello: %d\tCarte a lungo: %d\n\npunteggi CPU:\n Scope: %d\tSettanta: %d\n Settebello: %d\tCarte a lungo: %d\n\npunti totali giocatore: %d\tpunti totali CPU: %d\npremi Enter per continuare...", player.scope, player.settanta, player.settebello, player.lunga, cpu.scope, cpu.settanta, cpu.settebello, cpu.lunga, punteggio_totale(&player), punteggio_totale(&cpu));
+    printf("tot. cpu: %d\t tot. player: %d", punteggio_totale(&cpu), punteggio_totale(&player));
 
     char c;
     while((c = getchar()) != '\n');
@@ -307,13 +324,17 @@ int main(){
 
                 if(input >= 1 && input-- <= 3){
                     if(player.mazzo[input].val != 99){
-                        uint8_t num_carte_mazzo = conta_carte(player.mazzo);
-                        if(gioca(&player, input) == 2 && (posizione_mazzo > 0 || num_carte_mazzo > 1 || conta_carte(cpu.mazzo) > 0)){
-                            printf("scopa! Premi Enter per continuare...");
+                        uint8_t num_carte_mazzo = conta_carte(player.mazzo), ris_gioca;
 
-                            char c;
-                            while((c = getchar()) != '\n');
-                            getchar();
+                        if((ris_gioca = gioca(&player, input)) > 0){
+                            ultima_presa = 'p';
+                            if(ris_gioca == 2 && (posizione_mazzo > 0 || num_carte_mazzo > 1 || conta_carte(cpu.mazzo) > 0)){
+                                printf("scopa! Premi Enter per continuare...");
+
+                                char c;
+                                while((c = getchar()) != '\n');
+                                getchar();
+                            }
                         }
 
                         printf("\e[1;1H\e[2J");
@@ -339,32 +360,41 @@ int main(){
             }
 
             struct carta prese_temp[15];
-            uint8_t trovata = 0;
+            uint8_t trovata = 0, fine_tavolo;
+
+            qsort(tavolo, (fine_tavolo = trova_fine_mazzo(tavolo)), sizeof(struct carta), confronta_valore);
 
             for(uint8_t i = 0; i <= 2; i++)
-                if(cpu.mazzo[i].val != 99)
-                    if(trova(tavolo, sizeof(struct carta), cpu.mazzo[i].val, 0, prese_temp, 0, 0)){
+                if(cpu.mazzo[i].val != 99){
+                    uint8_t trov = trova(tavolo, fine_tavolo, cpu.mazzo[i].val, 0, prese_temp, 0, 0);
+                    printf("trov: %d\n", trov);
+                    if((trov)){
                         printf("-> la CPU gioca la carta: %d %s\n", cpu.mazzo[i].val, cpu.mazzo[i].seme);
 
-                        uint8_t num_carte_mazzo = conta_carte(cpu.mazzo);
-                        if(gioca(&cpu, i) == 2 && (posizione_mazzo > 0 || num_carte_mazzo > 1 || conta_carte(player.mazzo) > 0)){
-                            printf("-> la CPU ha fatto scopa, premi Enter per continuare...");
+                        uint8_t num_carte_mazzo = conta_carte(cpu.mazzo), ris_gioca;
+                        if((ris_gioca = gioca(&cpu, i)) > 0){
+                            ultima_presa = 'c';
+                            if(ris_gioca == 2 && (posizione_mazzo > 0 || num_carte_mazzo > 1 || conta_carte(player.mazzo) > 0)){
+                                printf("-> la CPU ha fatto scopa, premi Enter per continuare...");
 
-                            char c;
-                            while((c = getchar()) != '\n');
-                            getchar();
+                                char c;
+                                while((c = getchar()) != '\n');
+                                getchar();
+                            }
+
                         }
 
                         trovata = 1;
                         break;
                     }
+                }
             if(!trovata){
                 uint8_t carta = 0;
 
                 while(cpu.mazzo[carta].val == 99)
                     carta++;
 
-                printf("-> la CPU gioca la carta: %d %s\n", cpu.mazzo[carta].val, cpu.mazzo[carta].seme);
+                printf("-> 1la CPU gioca la carta: %d %s\n", cpu.mazzo[carta].val, cpu.mazzo[carta].seme);
                 gioca(&cpu, carta);
             }
         }
